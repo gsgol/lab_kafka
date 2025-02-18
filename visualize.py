@@ -1,54 +1,50 @@
 import json
-import cfg.cfg as cfg
-from confluent_kafka import Consumer
 import streamlit as st
 import matplotlib.pyplot as plt
+from confluent_kafka import Consumer
 
-features = ['airtime', 'distance', 'metric', 'day_of_month']
-
-
-def create_session():
-    for feature in features:
-        if feature not in st.session_state:
-            st.session_state[feature] = []
-
-def add_values_to_session(sample):
-    for feature in features:
-        st.session_state[feature].append(sample[feature])
-
-
-def draw_air_time(air_time):
+def draw_arrtime(arr_time):
     fig, ax = plt.subplots()
-    ax.hist(st.session_state['day_of_month'], bins=20)
-    ax.set_xlabel('Day of month')
+    ax.hist(st.session_state['arrtime'], bins=31)
+    ax.set_xlabel('Arrival time')
     ax.set_ylabel('count')
-    air_time.pyplot(fig)
+    arr_time.pyplot(fig)
     plt.close()
 
-def draw_corr(corr):
+def draw_day_of_month(dof):
     fig, ax = plt.subplots()
-    ax.scatter(st.session_state['airtime'], st.session_state['distance'])
-    ax.set_xlabel('Time in air')
-    ax.set_ylabel('Distance')
-    corr.pyplot(fig)
+    ax.hist(st.session_state['day_of_month'])
+    ax.set_xlabel('Day of month')
+    ax.set_ylabel('count')
+    dof.pyplot(fig)
     plt.close()
 
 def draw_mae(mae):
-    mae.line_chart(st.session_state['metric'],
+    mae.line_chart(st.session_state['mae'],
                     x_label='dataset size', y_label='MAE')
     
-def visualizer():
-    create_session()
+def start(items):
+    for item in items:
+        if item not in st.session_state:
+            st.session_state[item] = []
 
-    consumer = Consumer(cfg.VIZ_CFG)
-    consumer.subscribe([cfg.MODEL_RES])
+def add_values(sample, items):
+    for item in items:
+        st.session_state[item].append(sample[item])
 
-    air_time = st.container(border=True)
-    air_time.title('Days of month distribution')
-    air_time = air_time.empty()
-    corr = st.container(border=True)
-    corr.title('Time in air and distance correlation')
-    corr = corr.empty()
+def visualize():
+    items = ['arrtime', 'mae', 'day_of_month']
+    start(items)
+
+    consumer = Consumer({'bootstrap.servers': 'localhost:9095', 'group.id': 'visualize'})
+    consumer.subscribe(['model_results'])
+
+    arr_time = st.container(border=True)
+    arr_time.title('Arrival time distribution')
+    arr_time = arr_time.empty()
+    dof = st.container(border=True)
+    dof.title('Days of month distribution')
+    dof = dof.empty()
     mae = st.container(border=True)
     mae.title('MAE')
     mae = mae.empty()
@@ -57,13 +53,13 @@ def visualizer():
         message = consumer.poll(1000)
         if message is not None:
             sample = json.loads(message.value().decode('utf-8'))
-            add_values_to_session(sample)
-            draw_air_time(air_time)
-            draw_corr(corr)
+            add_values(sample, items)
+            draw_arrtime(arr_time)
+            draw_day_of_month(dof)
             draw_mae(mae)
             
 
 
 
 if __name__ == "__main__":
-    visualizer()
+    visualize()
