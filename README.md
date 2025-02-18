@@ -9,8 +9,6 @@
 
 ![image](https://github.com/user-attachments/assets/32bec081-06d3-4e3f-b32f-d987a886305e)
 
-
-![image](https://github.com/user-attachments/assets/f5f07bef-291e-4d4b-ae03-64664207bd17)
 ## Требования
 Установить зависимости требуемые приложением
 ```
