@@ -1,12 +1,11 @@
 import time
 import json
-import cfg.cfg as cfg
-from confluent_kafka import Producer
 from river import stream
+from confluent_kafka import Producer
+
 
 def produce():
-    producer = Producer(cfg.PRODUCER_CFG)
-
+    producer = Producer({'bootstrap.servers': 'localhost:9095'})
     dateset_size = 300000
     dataset_stream = stream.iter_csv(
         'data/flights.csv',
@@ -23,10 +22,9 @@ def produce():
 
     for i in range(dateset_size):
         X, _ = next(dataset_stream)
-        producer.produce(cfg.PRODUCER, key='1',
+        producer.produce('producer', key='1',
                          value=json.dumps(X))
         producer.flush()
-        print(X)
         time.sleep(2)
 
 
